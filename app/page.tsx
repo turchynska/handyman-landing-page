@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-// import Services from "@/components/Services";
+import Services from "@/components/Services";
 // import WorkGallery from "@/components/WorkGallery";
 // import Reviews from "@/components/Reviews";
 // import Contact from "@/components/Contact";
@@ -10,10 +10,10 @@ export default function Home() {
     <main className="min-h-screen bg-[#F3FAFF] text-slate-900">
       <Navbar />
       <Hero />
-      {/* <Services />
-      <WorkGallery />
+      <Services />
+      {/* <WorkGallery />
       <Reviews />
-      <Contact /> */}
+      <Contact />  */}
     </main>
   );
 }
