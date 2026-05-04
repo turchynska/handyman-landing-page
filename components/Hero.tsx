@@ -11,7 +11,7 @@ export default function Hero() {
           </p>
 
           <h1 className="text-4xl font-bold leading-tight text-slate-900 md:text-6xl">
-            Reliable Handyman Services for Your Home in Charlotte NC
+           Handyman Services for Your Home in Charlotte NC
           </h1>
 
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
