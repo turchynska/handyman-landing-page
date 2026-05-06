@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   isOpen: boolean;
@@ -8,6 +8,16 @@ type Props = {
 };
 
 export default function GetQuoteModal({ isOpen, onClose }: Props) {
+  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    jobDescription: "",
+    zipCode: "",
+  });
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -20,6 +30,55 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Something went wrong");
+        return;
+      }
+
+      alert("Quote request sent successfully!");
+
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        jobDescription: "",
+        zipCode: "",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div
       onClick={onClose}
@@ -29,7 +88,6 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         className="relative flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-xl"
       >
-        {/* CLOSE BUTTON */}
         <button
           type="button"
           onClick={onClose}
@@ -39,7 +97,6 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
           ×
         </button>
 
-        {/* HEADER */}
         <div className="shrink-0 px-6 pb-4 pt-8 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-blue-600">
             Get a Quote
@@ -54,29 +111,47 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
           </p>
         </div>
 
-        {/* FORM */}
-        <form className="space-y-4 overflow-y-auto overscroll-contain px-6 pb-6 scrollbar-hide">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 overflow-y-auto overscroll-contain px-6 pb-6 scrollbar-hide"
+        >
           <input
             type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
             placeholder="Your Name *"
+            required
             className="w-full rounded-2xl border border-blue-100 px-5 py-3 outline-none focus:border-blue-500"
           />
 
           <input
             type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             placeholder="Phone Number *"
+            required
             className="w-full rounded-2xl border border-blue-100 px-5 py-3 outline-none focus:border-blue-500"
           />
 
           <input
             type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
             placeholder="Email *"
+            required
             className="w-full rounded-2xl border border-blue-100 px-5 py-3 outline-none focus:border-blue-500"
           />
 
           <textarea
+            name="jobDescription"
+            value={formData.jobDescription}
+            onChange={handleChange}
             placeholder="Describe the job *"
             rows={4}
+            required
             className="w-full resize-none rounded-2xl border border-blue-100 px-5 py-3 outline-none focus:border-blue-500"
           />
 
@@ -93,15 +168,20 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
 
           <input
             type="text"
+            name="zipCode"
+            value={formData.zipCode}
+            onChange={handleChange}
             placeholder="ZIP Code *"
+            required
             className="w-full rounded-2xl border border-blue-100 px-5 py-3 outline-none focus:border-blue-500"
           />
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-blue-600 px-6 py-3 text-lg font-semibold text-white hover:bg-blue-700"
+            disabled={loading}
+            className="w-full rounded-2xl bg-blue-600 px-6 py-3 text-lg font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
-            Get My Free Quote →
+            {loading ? "Sending..." : "Get My Free Quote →"}
           </button>
 
           <p className="text-center text-sm text-slate-500">
