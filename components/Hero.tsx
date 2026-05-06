@@ -15,6 +15,8 @@ export default function Hero() {
           </h1>
 
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
+            Most jobs range from 130$.
+            
             Professional help with TV mounting, furniture assembly, drywall
             repair, small installations, and home maintenance.
           </p>

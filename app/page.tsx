@@ -2,8 +2,8 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import WorkGallery from "@/components/WorkGallery";
-// import Reviews from "@/components/Reviews";
-// import Contact from "@/components/Contact";
+import Reviews from "@/components/Reviews";
+import Contact from "@/components/Contact";
 
 export default function Home() {
   return (
@@ -12,8 +12,8 @@ export default function Home() {
       <Hero />
       <Services />
       <WorkGallery />
-      {/* <Reviews />
-      <Contact /> */}
+      <Reviews />
+      <Contact />
     </main>
   );
 }
