@@ -11,12 +11,17 @@ export default function Hero() {
           </p>
 
           <h1 className="text-4xl font-bold leading-tight text-slate-900 md:text-6xl">
-           Handyman Services for Your Home in Charlotte NC
+            Handyman Services for Your Home in Charlotte NC
           </h1>
 
-          <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-            Most jobs range from 130$.
-            
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2">
+            <span className="text-blue-500">💰</span>
+            <span className="font-semibold text-blue-700">
+              Most jobs range from $130
+            </span>
+          </div>
+
+          <p className="mt-3 max-w-xl text-lg leading-8 text-slate-600">
             Professional help with TV mounting, furniture assembly, drywall
             repair, small installations, and home maintenance.
           </p>
@@ -29,11 +34,12 @@ export default function Hero() {
               Get a Free Quote
             </a>
 
+            {/* ✅ FIX: tel: link so tap-to-call works on mobile */}
             <a
               href="tel:+17049128521"
               className="rounded-xl border border-blue-200 bg-white px-6 py-3 text-center font-semibold text-blue-700 hover:bg-blue-50"
             >
-              Call Now
+              📞 Call Now
             </a>
           </div>
 
@@ -71,9 +77,15 @@ export default function Hero() {
             />
           </div>
 
+          {/* ✅ FIX: phone number in card is also a tap-to-call link */}
           <div className="absolute -bottom-5 left-6 rounded-2xl bg-white px-5 py-4 shadow-lg">
             <p className="font-semibold text-slate-900">Vlad</p>
-            <p className="text-sm text-slate-500">+1 (704) 912-8521</p>
+            <a
+              href="tel:+17049128521"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              +1 (704) 912-8521
+            </a>
           </div>
         </div>
       </div>
