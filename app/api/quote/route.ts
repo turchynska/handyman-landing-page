@@ -74,7 +74,11 @@ export async function POST(req: NextRequest) {
       | { type: "text"; text: string }
       | {
           type: "image";
-          source: { type: "base64"; media_type: string; data: string };
+          source: {
+            type: "base64";
+            media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+            data: string;
+          };
         };
 
     const userContent: ContentBlock[] = [];
@@ -95,7 +99,18 @@ Job description: ${jobDescription}`,
     if (photo && photo.size > 0) {
       const bytes = await photo.arrayBuffer();
       const base64 = Buffer.from(bytes).toString("base64");
-      const mimeType = photo.type || "image/jpeg";
+      const rawMime = photo.type || "image/jpeg";
+      const allowedMimes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ] as const;
+      const mimeType = allowedMimes.includes(
+        rawMime as (typeof allowedMimes)[number],
+      )
+        ? (rawMime as (typeof allowedMimes)[number])
+        : "image/jpeg";
 
       userContent.push({
         type: "image",
