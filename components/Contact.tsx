@@ -100,7 +100,7 @@ export default function Contact() {
                 </a>
 
                 <a
-                  href="mailto:drop2093@gmail.com"
+                  href="mailto:turchvladhandyman@gmail.com"
                   className="rounded-xl border border-blue-200 bg-white px-5 py-3 text-center font-semibold text-blue-700 transition hover:bg-blue-50"
                 >
                   Send Email
