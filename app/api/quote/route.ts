@@ -52,7 +52,6 @@ const SYSTEM_PROMPT = `Ти асистент Влада — професійно
 
 export async function POST(req: NextRequest) {
   try {
-    // ── Parse FormData (supports file upload) ─────────────────────────────
     const formData = await req.formData();
 
     const name = formData.get("name") as string;
@@ -69,69 +68,72 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Build Claude message content ──────────────────────────────────────
-    type ContentBlock =
-      | { type: "text"; text: string }
-      | {
-          type: "image";
-          source: {
-            type: "base64";
-            media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
-            data: string;
-          };
-        };
+    // Build message content using Anthropic SDK types
+    const allowedMimes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ] as const;
+    type AllowedMime = (typeof allowedMimes)[number];
 
-    const userContent: ContentBlock[] = [];
+    const messages: Anthropic.MessageParam[] = [];
+    let photoAttached = false;
+    let photoBuffer: Buffer | null = null;
+    let photoExt = "jpg";
 
-    // Add text description
-    userContent.push({
-      type: "text",
-      text: `New quote request:
+    const textContent = `New quote request:
 Name: ${name}
 Phone: ${phone}
 Email: ${email}
 ZIP: ${zipCode}
-Job description: ${jobDescription}`,
-    });
+Job description: ${jobDescription}`;
 
-    // Add photo if provided — Claude Vision will analyse it
-    let photoAttached = false;
     if (photo && photo.size > 0) {
       const bytes = await photo.arrayBuffer();
-      const base64 = Buffer.from(bytes).toString("base64");
-      const rawMime = photo.type || "image/jpeg";
-      const allowedMimes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ] as const;
-      const mimeType = allowedMimes.includes(
-        rawMime as (typeof allowedMimes)[number],
+      photoBuffer = Buffer.from(bytes);
+      photoExt = (photo.name?.split(".").pop() || "jpg").toLowerCase();
+      const mimeType: AllowedMime = allowedMimes.includes(
+        photo.type as AllowedMime,
       )
-        ? (rawMime as (typeof allowedMimes)[number])
+        ? (photo.type as AllowedMime)
         : "image/jpeg";
 
-      userContent.push({
-        type: "image",
-        source: { type: "base64", media_type: mimeType, data: base64 },
+      messages.push({
+        role: "user",
+        content: [
+          { type: "text", text: textContent },
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: mimeType,
+              data: photoBuffer.toString("base64"),
+            },
+          },
+        ],
       });
       photoAttached = true;
+    } else {
+      messages.push({
+        role: "user",
+        content: textContent,
+      });
     }
 
-    // ── Call Claude ───────────────────────────────────────────────────────
     const claudeResponse = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2000,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userContent }],
+      messages,
     });
 
-    // ── Parse JSON response ───────────────────────────────────────────────
     const rawText =
       claudeResponse.content[0].type === "text"
         ? claudeResponse.content[0].text
         : "";
+
+    console.log("Claude raw response:", rawText);
 
     let analysis: {
       jobSummary: string;
@@ -165,15 +167,14 @@ Job description: ${jobDescription}`,
             en: `Hi ${name}! Thanks for reaching out. Could you send a photo so I can give a more accurate estimate?`,
           },
           {
-            ua: "Робота орієнтовно від $130. Коли зручно зустрітись?",
-            en: `Hi ${name}! Thanks for reaching out. Based on your description the job would start at $130. What's your availability?`,
+            ua: "Робота орієнтовно від $130. Коли зручно?",
+            en: `Hi ${name}! Thanks for reaching out. Based on your description the job starts at $130. What's your availability?`,
           },
         ],
         internalNotes: "Claude parse error — перевір вручну",
       };
     }
 
-    // ── Build email HTML ──────────────────────────────────────────────────
     const scopeColor =
       analysis.estimatedScope === "small"
         ? "#16a34a"
@@ -181,7 +182,7 @@ Job description: ${jobDescription}`,
           ? "#d97706"
           : "#dc2626";
 
-    const mapsUrl = `https://www.google.com/maps/dir/Kannapolis+NC/${zipCode}+NC`;
+    const mapsUrl = `https://www.google.com/maps/dir/Charlotte+NC/${zipCode}+NC`;
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -201,10 +202,8 @@ Job description: ${jobDescription}`,
       <tr><td style="padding:6px 0;color:#64748b;width:100px;">Name</td><td style="padding:6px 0;font-weight:600;color:#0f172a;">${name}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Phone</td><td style="padding:6px 0;"><a href="tel:${phone}" style="color:#1d4ed8;font-weight:600;">${phone}</a></td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Email</td><td style="padding:6px 0;"><a href="mailto:${email}" style="color:#1d4ed8;font-weight:600;">${email}</a></td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;">ZIP</td><td style="padding:6px 0;font-weight:600;color:#0f172a;">
-        ${zipCode} — <a href="${mapsUrl}" target="_blank" style="color:#1d4ed8;">📍 Directions from home</a>
-      </td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;">Photo</td><td style="padding:6px 0;color:#0f172a;">${photoAttached ? "✅ Attached below" : "❌ Not provided"}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">ZIP</td><td style="padding:6px 0;font-weight:600;color:#0f172a;">${zipCode} — <a href="${mapsUrl}" target="_blank" style="color:#1d4ed8;">Directions from Charlotte</a></td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Photo</td><td style="padding:6px 0;color:#0f172a;">${photoAttached ? "Attached below" : "Not provided"}</td></tr>
     </table>
   </div>
 
@@ -214,7 +213,7 @@ Job description: ${jobDescription}`,
   </div>
 
   <div style="padding:24px 32px 0;">
-    <h2 style="margin:0 0 16px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">⚡ Claude Analysis</h2>
+    <h2 style="margin:0 0 16px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Claude Analysis</h2>
     <div style="background:#f0f9ff;border-radius:12px;padding:20px;">
       <p style="margin:0 0 12px;color:#0f172a;"><strong>Summary:</strong> ${analysis.jobSummary}</p>
       <p style="margin:0 0 8px;">
@@ -230,14 +229,14 @@ Job description: ${jobDescription}`,
     photoAttached
       ? `
   <div style="padding:24px 32px 0;">
-    <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">📷 Фото від клієнта</h2>
+    <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Photo from Client</h2>
     <img src="cid:clientphoto" style="max-width:100%;border-radius:12px;display:block;" alt="Client photo" />
   </div>`
       : ""
   }
 
   <div style="padding:24px 32px 0;">
-    <h2 style="margin:0 0 16px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">💬 Варіанти відповіді</h2>
+    <h2 style="margin:0 0 16px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Reply Options</h2>
     ${analysis.replyOptions
       .map((opt: { ua: string; en: string }, i: number) => {
         const subject = encodeURIComponent(`Re: Handyman Quote Request`);
@@ -246,15 +245,13 @@ Job description: ${jobDescription}`,
         return `
       <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
         <div style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">🇺🇦 Чорновик для Влада</p>
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">UA — для Влада</p>
           <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;">${opt.ua}</p>
         </div>
         <div style="padding:12px 18px;">
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">🇺🇸 Для клієнта (англійська)</p>
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">EN — для клієнта</p>
           <p style="margin:0 0 12px;color:#334155;font-size:14px;line-height:1.6;">${opt.en}</p>
-          <a href="${mailtoLink}" style="display:inline-block;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;text-decoration:none;">
-            📩 Відправити клієнту
-          </a>
+          <a href="${mailtoLink}" style="display:inline-block;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;text-decoration:none;">Send to client</a>
         </div>
       </div>`;
       })
@@ -265,7 +262,7 @@ Job description: ${jobDescription}`,
     analysis.internalNotes
       ? `
   <div style="padding:24px 32px 0;">
-    <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">🔧 Notes for Vlad</h2>
+    <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Notes for Vlad</h2>
     <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:14px 18px;color:#92400e;">${analysis.internalNotes}</div>
   </div>`
       : ""
@@ -279,19 +276,16 @@ Job description: ${jobDescription}`,
 </body>
 </html>`;
 
-    // Send via Resend
     const attachments: {
       filename: string;
       content: Buffer;
       content_id?: string;
       inline?: boolean;
     }[] = [];
-    if (photo && photo.size > 0) {
-      const photoBytes = await photo.arrayBuffer();
-      const ext = (photo.name?.split(".").pop() || "jpg").toLowerCase();
+    if (photoAttached && photoBuffer) {
       attachments.push({
-        filename: `client-photo-${Date.now()}.${ext}`,
-        content: Buffer.from(photoBytes),
+        filename: `client-photo-${Date.now()}.${photoExt}`,
+        content: photoBuffer,
         content_id: "clientphoto",
         inline: true,
       });
