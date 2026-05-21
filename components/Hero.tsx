@@ -1,6 +1,10 @@
 import Image from "next/image";
 
-export default function Hero() {
+type Props = {
+  onOpenQuote: () => void;
+};
+
+export default function Hero({ onOpenQuote }: Props) {
   return (
     <section id="about" className="relative overflow-hidden px-6 py-6 md:py-6">
       <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
@@ -27,14 +31,15 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#contact"
+            {/* ✅ Відкриває модальне вікно */}
+            <button
+              type="button"
+              onClick={onOpenQuote}
               className="rounded-xl bg-blue-600 px-6 py-3 text-center font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               Get a Free Quote
-            </a>
+            </button>
 
-            {/* ✅ FIX: tel: link so tap-to-call works on mobile */}
             <a
               href="tel:+17049128521"
               className="rounded-xl border border-blue-200 bg-white px-6 py-3 text-center font-semibold text-blue-700 hover:bg-blue-50"
@@ -48,12 +53,10 @@ export default function Hero() {
               <p className="text-2xl font-bold text-blue-700">4.9★</p>
               <p className="text-sm text-slate-500">Reviews</p>
             </div>
-
             <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
               <p className="text-2xl font-bold text-blue-700">Fast</p>
               <p className="text-sm text-slate-500">Response</p>
             </div>
-
             <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
               <p className="text-2xl font-bold text-blue-700">Local</p>
               <p className="text-sm text-slate-500">Service</p>
@@ -77,7 +80,6 @@ export default function Hero() {
             />
           </div>
 
-          {/* ✅ FIX: phone number in card is also a tap-to-call link */}
           <div className="absolute -bottom-5 left-6 rounded-2xl bg-white px-5 py-4 shadow-lg">
             <p className="font-semibold text-slate-900">Vlad</p>
             <a
