@@ -292,7 +292,7 @@ Job description: ${jobDescription}`;
     }
 
     await resend.emails.send({
-      from: "TurchV Handyman <onboarding@resend.dev>",
+      from: "TurchV Handyman <quotes@turchvhandyman.com>",
       to: ["turchvladhandyman@gmail.com"],
       subject: `New Quote: ${name} - ZIP ${zipCode} - ${analysis.estimatedScope?.toUpperCase()}`,
       html: emailHtml,
