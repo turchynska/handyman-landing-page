@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build message content using Anthropic SDK types
     const allowedMimes = [
       "image/jpeg",
       "image/png",
@@ -225,24 +224,19 @@ Job description: ${jobDescription}`;
     </div>
   </div>
 
-  ${
-    photoAttached
-      ? `
+  ${photoAttached ? `
   <div style="padding:24px 32px 0;">
     <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Photo from Client</h2>
     <img src="cid:clientphoto" style="max-width:100%;border-radius:12px;display:block;" alt="Client photo" />
-  </div>`
-      : ""
-  }
+  </div>` : ""}
 
   <div style="padding:24px 32px 0;">
     <h2 style="margin:0 0 16px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Reply Options</h2>
-    ${analysis.replyOptions
-      .map((opt: { ua: string; en: string }, i: number) => {
-        const subject = encodeURIComponent(`Re: Handyman Quote Request`);
-        const body = encodeURIComponent(opt.en);
-        const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
-        return `
+    ${analysis.replyOptions.map((opt: { ua: string; en: string }, i: number) => {
+      const subject = encodeURIComponent("Re: Handyman Quote Request");
+      const body = encodeURIComponent(opt.en);
+      const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+      return `
       <div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
         <div style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
           <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">UA — для Влада</p>
@@ -254,19 +248,14 @@ Job description: ${jobDescription}`;
           <a href="${mailtoLink}" style="display:inline-block;background:#1d4ed8;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;text-decoration:none;">Send to client</a>
         </div>
       </div>`;
-      })
-      .join("")}
+    }).join("")}
   </div>
 
-  ${
-    analysis.internalNotes
-      ? `
+  ${analysis.internalNotes ? `
   <div style="padding:24px 32px 0;">
     <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;">Notes for Vlad</h2>
     <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:14px 18px;color:#92400e;">${analysis.internalNotes}</div>
-  </div>`
-      : ""
-  }
+  </div>` : ""}
 
   <div style="padding:28px 32px;margin-top:24px;border-top:1px solid #f1f5f9;text-align:center;color:#94a3b8;font-size:13px;">
     TurchV LLC Handyman · Charlotte, NC · <a href="tel:+17049128521" style="color:#1d4ed8;">+1 (704) 912-8521</a>
@@ -282,6 +271,7 @@ Job description: ${jobDescription}`;
       content_id?: string;
       inline?: boolean;
     }[] = [];
+
     if (photoAttached && photoBuffer) {
       attachments.push({
         filename: `client-photo-${Date.now()}.${photoExt}`,
@@ -291,13 +281,15 @@ Job description: ${jobDescription}`;
       });
     }
 
-    await resend.emails.send({
-      from: "TurchV Handyman <quotes@turchvhandyman.com>",
+    const resendResult = await resend.emails.send({
+      from: "TurchV Handyman <onboarding@resend.dev>",
       to: ["turchvladhandyman@gmail.com"],
       subject: `New Quote: ${name} - ZIP ${zipCode} - ${analysis.estimatedScope?.toUpperCase()}`,
       html: emailHtml,
       ...(attachments.length > 0 && { attachments }),
     });
+
+    console.log("Resend result:", JSON.stringify(resendResult));
 
     return NextResponse.json({ success: true });
   } catch (error) {
