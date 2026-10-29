@@ -85,8 +85,8 @@ export default function GetQuoteModal({ isOpen, onClose }: Props) {
       setStatus("success");
 
       // ChatGPT ads conversion tracking
-      if (typeof window !== "undefined" && (window as any).oaig) {
-        (window as any).oaig("measure", "lead_created", {
+      if (typeof window !== "undefined" && (window as any).oaiq) {
+        (window as any).oaiq("measure", "lead_created", {
           type: "customer_action",
         });
       }
